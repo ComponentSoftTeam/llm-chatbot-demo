@@ -97,7 +97,7 @@ gr.close_all()
 callback = gr.CSVLogger()
 
 with gr.Blocks(title="CompSoft") as demo:
-    gr.Markdown("# Component Soft LLM Demo")
+    gr.Markdown("# Mercedes LLM Demo")
     system_prompt = gr.Textbox(label="System prompt", value="You are a helpful, harmless and honest assistant.")
     with gr.Row():
         modelfamily = gr.Dropdown(list(modelfamilies_model_dict.keys()), label="Model family", value="Mistral")
@@ -107,7 +107,7 @@ with gr.Blocks(title="CompSoft") as demo:
         max_tokens = gr.Slider(label="Max tokens", minimum=100, maximum=2000, value=500, 
             info="Maximum number of generated tokens")
     with gr.Row():
-        chatbot=gr.Chatbot(label="CompSoftGPT", height=400, show_copy_button=True)
+        chatbot=gr.Chatbot(label="ComponentSoft_LLM", height=400, show_copy_button=True)
     with gr.Row():
         prompt = gr.Textbox(label="Your prompt", value="Who was Albert Einstein?")
     with gr.Row():
@@ -136,5 +136,5 @@ with gr.Blocks(title="CompSoft") as demo:
     )
 
 #demo.launch()
-demo.launch(share=True, share_server_address="gradio.componentsoft.ai:7000", share_server_protocol="https", auth=("Ericsson", "Torshamnsgatan21"), max_threads=20, show_error=True, favicon_path="/home/rconsole/GIT/AI-434/source/labfiles/data/favicon.ico", state_session_capacity=20)
+demo.launch(share=True, share_server_address="gradio.componentsoft.ai:7000", share_server_protocol="https", auth=("Mercedes", "70372Stuttgart"), max_threads=20, show_error=True, favicon_path="/home/rconsole/GIT/AI-434/source/labfiles/data/favicon.ico", state_session_capacity=20)
 
