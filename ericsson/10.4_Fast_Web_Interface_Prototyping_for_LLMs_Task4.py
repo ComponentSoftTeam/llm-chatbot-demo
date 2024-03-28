@@ -1,4 +1,3 @@
-#! /usr/bin/python3
 # ---
 # jupyter:
 #   jupytext:
@@ -6,7 +5,7 @@
 #       extension: .py
 #       format_name: light
 #       format_version: '1.5'
-#       jupytext_version: 1.16.0
+#       jupytext_version: 1.16.1
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -30,8 +29,8 @@ Prompt.set_system_prompt('You are a helpful, harmless and honest assistant who h
 
 # You can use the LSP or the typing to check the available models
 #Prompt.set_model("GPT", "gpt-3.5-turbo")
-#Prompt.set_model("Mistral", "mistral-large")
 Prompt.set_model("Mistral", "mistral-large")
+#Prompt.set_model("Llama", "llama-2-70b-chat")
 
 Prompt.set_max_tokens(256)
 Prompt.set_verbose(True)
@@ -58,7 +57,7 @@ print()
 # +
 import gradio as gr
 
-Prompt.set_verbose(False)
+Prompt.set_verbose(True)
 
 modelfamilies_model_dict = {
     "GPT": ["gpt-3.5-turbo", "gpt-4"],
@@ -67,6 +66,10 @@ modelfamilies_model_dict = {
 }
 
 def exec_prompt(chat_history, prompt, system_prompt, model_family = "Mistral", model="mistral-large", temperature=0.7, max_tokens=512):
+    if prompt == "": prompt = "I have no question"
+    if model == "mistral-large": model = "mistral-large-latest"
+    if model_family == "Mistral" and temperature > 1: temperature = 1
+    if model_family == "Llama" and temperature < 0.01: temperature = 0.01
     Prompt.set_model(model_family, model)
     Prompt.set_system_prompt(system_prompt)
     Prompt.set_temperature(temperature)
@@ -79,6 +82,10 @@ def exec_prompt(chat_history, prompt, system_prompt, model_family = "Mistral", m
     return chat_history, ""
 
 def exec_prompt_streaming(chat_history, prompt, system_prompt, model_family = "Mistral", model="mistral-large", temperature=0.7, max_tokens=512):
+    if prompt == "": prompt = "I have no question"
+    if model == "mistral-large": model = "mistral-large-latest"
+    if model_family == "Mistral" and temperature > 1: temperature = 1
+    if model_family == "Llama" and temperature < 0.01: temperature = 0.01
     Prompt.set_system_prompt(system_prompt)
     Prompt.set_temperature(temperature)
     Prompt.set_max_tokens(max_tokens)
@@ -97,7 +104,7 @@ gr.close_all()
 callback = gr.CSVLogger()
 
 with gr.Blocks(title="CompSoft") as demo:
-    gr.Markdown("# Component Soft LLM Demo")
+    gr.Markdown("# Ericsson LLM Demo")
     system_prompt = gr.Textbox(label="System prompt", value="You are a helpful, harmless and honest assistant.")
     with gr.Row():
         modelfamily = gr.Dropdown(list(modelfamilies_model_dict.keys()), label="Model family", value="Mistral")
@@ -107,7 +114,7 @@ with gr.Blocks(title="CompSoft") as demo:
         max_tokens = gr.Slider(label="Max tokens", minimum=100, maximum=2000, value=500, 
             info="Maximum number of generated tokens")
     with gr.Row():
-        chatbot=gr.Chatbot(label="CompSoftGPT", height=400, show_copy_button=True)
+        chatbot=gr.Chatbot(label="ComponentSoft_GPT", height=400, show_copy_button=True)
     with gr.Row():
         prompt = gr.Textbox(label="Your prompt", value="Who was Albert Einstein?")
     with gr.Row():
@@ -137,4 +144,9 @@ with gr.Blocks(title="CompSoft") as demo:
 
 #demo.launch()
 demo.launch(share=True, share_server_address="gradio.componentsoft.ai:7000", share_server_protocol="https", auth=("Ericsson", "Torshamnsgatan21"), max_threads=20, show_error=True, favicon_path="/home/rconsole/GIT/AI-434/source/labfiles/data/favicon.ico", state_session_capacity=20)
+
+# + active=""
+# gr.close_all()
+# -
+
 
