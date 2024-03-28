@@ -67,6 +67,10 @@ modelfamilies_model_dict = {
 }
 
 def exec_prompt(chat_history, prompt, system_prompt, model_family = "Mistral", model="mistral-large", temperature=0.7, max_tokens=512):
+    if prompt == "": prompt = "I have no question"
+    if model == "mistral-large": model = "mistral-large-latest"
+    if model_family == "Mistral" and temperature > 1: temperature = 1
+    if model_family == "Llama" and temperature < 0.01: temperature = 0.01
     Prompt.set_model(model_family, model)
     Prompt.set_system_prompt(system_prompt)
     Prompt.set_temperature(temperature)
@@ -79,6 +83,10 @@ def exec_prompt(chat_history, prompt, system_prompt, model_family = "Mistral", m
     return chat_history, ""
 
 def exec_prompt_streaming(chat_history, prompt, system_prompt, model_family = "Mistral", model="mistral-large", temperature=0.7, max_tokens=512):
+    if prompt == "": prompt = "I have no question"
+    if model == "mistral-large": model = "mistral-large-latest"
+    if model_family == "Mistral" and temperature > 1: temperature = 1
+    if model_family == "Llama" and temperature < 0.01: temperature = 0.01
     Prompt.set_system_prompt(system_prompt)
     Prompt.set_temperature(temperature)
     Prompt.set_max_tokens(max_tokens)
