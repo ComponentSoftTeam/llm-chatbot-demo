@@ -161,3 +161,8 @@ cython_debug/
 
 
 pyproject.toml
+*/*nohup.out
+*/.cache/
+*/.ipynb_checkpoints/
+*/ __pycache__/
+*/flagged_data_points/
