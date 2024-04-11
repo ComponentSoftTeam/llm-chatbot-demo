@@ -173,13 +173,13 @@ class LlamaProvider(LLMProvider):
     def get_chat_history(self, model: str, chat_history: List[Tuple[str, str]], system_prompt: str) -> str:
         messages = ""
         if chat_history[0][1] == "": 
-                messages = chat_history[0][0]
+                messages = f"{chat_history[0][0]} [/INST]"
         else:
             for user, assistant in chat_history:
                 messages += f" {user} [/INST]"
                 if assistant:
-                    messages += f" {assistant} </s><s>[INST]"
-        return messages
+                    messages += f" {assistant}</s><s>[INST]"
+        return messages[:-len(" [/INST]")]
     
     def exec(self, model: str, chat_history: List[dict], system_prompt: str,  temperature: float, max_tokens: int) -> str:
         if ':' in model and model.split(":")[0] in LlamaProvider.REPLICATE_CUSTOM_HOSTED_MODELS:
@@ -187,7 +187,7 @@ class LlamaProvider(LLMProvider):
   
         if "chat" in model or "instruct" in model:
             #prompt_template = f"<s>[INST] <<SYS>> {{system_prompt}} <</SYS>>\n {{prompt}}"
-            prompt_template = f"[INST] <<SYS>> {{system_prompt}} <</SYS>>\n {{prompt}}"
+            #prompt_template = f"[INST] <<SYS>> {{system_prompt}} <</SYS>>\n {{prompt}}"
             prompt = self.get_chat_history(model, chat_history, system_prompt)
             output = Llama_client.run(
                 model,
@@ -219,7 +219,7 @@ class LlamaProvider(LLMProvider):
 
         if "chat" in model or "instruct" in model:
             #prompt_template = f"<s>[INST] <<SYS>> {{system_prompt}} <</SYS>>\n {{prompt}}"
-            prompt_template = f"[INST] <<SYS>> {{system_prompt}} <</SYS>>\n {{prompt}}"
+            #prompt_template = f"[INST] <<SYS>> {{system_prompt}} <</SYS>>\n {{prompt}}"
             prompt = self.get_chat_history(model, chat_history, system_prompt)
             stream = Llama_client.stream(
                 model,
