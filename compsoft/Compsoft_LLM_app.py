@@ -61,8 +61,11 @@ Prompt.set_verbose(False)
 
 modelfamilies_model_dict = {
     "GPT": ["gpt-3.5-turbo", "gpt-4"],
-    "Mistral": ["mistral-tiny", "mistral-small", "mistral-medium", "mistral-large"],
-    "Llama": ["llama-2-7b-chat", "llama-2-13b-chat", "llama-2-70b-chat", "codellama-7b-instruct", "codellama-70b-instruct"],
+    "Mistral": ["mistral-tiny", "mistral-small", "mistral-large",
+                             #"mistral-medium",
+                             "open-mistral-7b", "open-mixtral-8x7b", "open-mixtral-8x22b"],
+    #"Llama": ["llama-2-7b-chat", "llama-2-13b-chat", "llama-2-70b-chat", "codellama-7b-instruct", "codellama-70b-instruct"],
+    "Llama": ["llama-v3-8b-instruct", "llama-v3-70b-instruct"],
 }
 
 def exec_prompt(chat_history, prompt, system_prompt, model_family = "Mistral", model="mistral-large", temperature=0.7, max_tokens=512):
@@ -143,7 +146,7 @@ with gr.Blocks(title="CompSoft") as demo:
     )
 
 #demo.launch()
-demo.launch(share=True, share_server_address="gradio.componentsoft.ai:7000", share_server_protocol="https", auth=("CompSoft", "Bikszadi16"), max_threads=20, show_error=True, favicon_path="/home/rconsole/GIT/AI-434/source/labfiles/data/favicon.ico", state_session_capacity=20)
+demo.launch(share=True, share_server_address="gradio.componentsoft.ai:7000", share_server_protocol="https", auth=("CompSoft", "Bikszadi16"), max_threads=20, show_error=True, favicon_path="data/favicon.ico", state_session_capacity=20)
 
 # + active=""
 # gr.close_all()

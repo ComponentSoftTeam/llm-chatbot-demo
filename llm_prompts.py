@@ -12,18 +12,23 @@ from mistralai.models.chat_completion import ChatMessage
 from dotenv import load_dotenv, find_dotenv
 from component_utils import cached
 import re
+import httpx
 
 from fireworks.client import Fireworks
+import fireworks.client
 
 logging.basicConfig(level=logging.INFO)
 word_splitter = re.compile(r'(\s+)')
 
-load_dotenv(find_dotenv())
-
+load_dotenv(find_dotenv(), override=True)
 
 Messages = List[Tuple[str, str]]
 
 class LLMProvider:
+    @classmethod
+    @abstractmethod
+    def get_client(cls) -> Any: ...
+
     @abstractmethod
     def exec(self, model: str, chat_history: Messages, system_prompt: str, temperature: float, max_tokens: int) -> str:
         """"Executes a model synchronously and returns the response"""
@@ -40,6 +45,9 @@ class LLMProvider:
 class OpenAICompletionProvider(LLMProvider):
     client = OpenAI() # The api key is queried from the env
 
+    @classmethod
+    def get_client(cls) -> OpenAI: 
+        return cls.client
 
     COMPLETION_MODELS = {"gpt-3.5-turbo-instruct",
                          "davinci-002", "babbage-002"}
@@ -91,6 +99,10 @@ class OpenAICompletionProvider(LLMProvider):
 class OpenAIProvider(LLMProvider):
     client = OpenAI() # The api key is queried from the env
 
+    @classmethod
+    def get_client(cls) -> OpenAI: 
+        return cls.client
+
     def get_chat_history(self, chat_history: Messages, system_prompt: str) -> List[ChatCompletionMessageParam]:
         messages: List[ChatCompletionMessageParam] = [{"role": "system", "content": system_prompt}]
         for user_prompt, assistant_response in chat_history:
@@ -131,6 +143,10 @@ class OpenAIProvider(LLMProvider):
 class MistralProvider(LLMProvider):
     client = MistralClient(api_key=os.getenv("MISTRAL_API_KEY"))
 
+    @classmethod
+    def get_client(cls) -> MistralClient: 
+        return cls.client
+
     def get_chat_history(self, chat_history: Messages, system_prompt: str) -> List[ChatMessage]:
         messages = [ChatMessage(role="system", content=system_prompt)]
         for user_prompt, assistant_response in chat_history:
@@ -169,6 +185,10 @@ class MistralProvider(LLMProvider):
 
 class LlamaProvider(LLMProvider):
     client = Fireworks(api_key=os.getenv("FIREWORKS_API_KEY"))
+
+    @classmethod
+    def get_client(cls) -> Fireworks: 
+        return cls.client
 
     def get_chat_history(self, chat_history: Messages, system_prompt: str) -> List[Dict[str, str]]:
 
@@ -215,37 +235,68 @@ class LlamaProvider(LLMProvider):
         yield from (chunk for chunk in chunks if chunk)
 
 
-# class GoogleProvider(LLMProvider):
-#     def get_chat_history(self, model: str, chat_history: List[Tuple[str, str]], system_prompt: str) -> str:
-#         prompt = ""
-#         if 'gemma' in model and ('it' in model or len(chat_history) > 1):
-#             prompt = f"{system_prompt}\n"
-#             prompt += '\n'.join(f"<start_of_turn>user\n{user}<end_of_turn>\n<start_of_turn>model\n{assistant}<end_of_turn>" for user, assistant in chat_history[:-1])
-#             prompt += f"\n<start_of_turn>user\n{chat_history[-1][0]}<end_of_turn>\n"
-#             prompt += "<start_of_turn>model\n"
-#         elif 'gemma' in model:  # Not instruction tuned with single param
-#             prompt = f"{system_prompt}\n\n{chat_history[0][0]}"
-#         elif 'flan' in model:
-#             prompt = f"{system_prompt}\n\n"
-#             prompt += '\n'.join(f"Question: {user}\nAnswer: {assistant}" for user, assistant in chat_history)
-#         else:
-#             raise ValueError(f"Model is not supported {model}")
-#
-#         return prompt
-#
-#     def exec(self, model: str, chat_history: str, system_prompt: str,  temperature: float, max_tokens: int) -> str:
-#         pass
-#
-#     def exec_streaming(self, model: str, chat_history: List[dict], system_prompt: str,  temperature: float, max_tokens: int) -> Iterable[str]:
-#         pass
-#
+
+class GoogleProvider(LLMProvider):
+    client = Fireworks(api_key=os.getenv("FIREWORKS_API_KEY"))
+
+    @classmethod
+    def get_client(cls) -> Fireworks: 
+        return cls.client
+
+    def get_chat_history(self, chat_history: Messages, system_prompt: str) -> List[Dict[str, str]]:
+
+        history = []
+        if system_prompt:
+            history.append({"role": "user", "content": system_prompt})
+            history.append({"role": "assistant", "content": "Sure thing, I'll follow your instructions."})
+
+        for user, assistant in chat_history:
+            if user:
+                history.append({"role": "user", "content": user})
+            if assistant:
+                history.append({"role": "assistant", "content": assistant})
+
+        return history
+    
+    def exec(self, model: str, chat_history: Messages, system_prompt: str,  temperature: float, max_tokens: int) -> str:
+
+        history = self.get_chat_history(chat_history, system_prompt)
+
+        response = LlamaProvider.client.chat.completions.create(
+          model=f"accounts/fireworks/models/{model}",
+          messages=history,
+          temperature=temperature,
+          max_tokens=max_tokens,
+          stream=False,
+        )
+
+        return response.choices[0].message.content  # type: ignore
+
+    def exec_streaming(self, model: str, chat_history: Messages, system_prompt: str,  temperature: float, max_tokens: int) -> Iterable[str]:
+
+        history = self.get_chat_history(chat_history, system_prompt)
+
+        response = LlamaProvider.client.chat.completions.create(
+          model=f"accounts/fireworks/models/{model}",
+          messages=history,
+          temperature=temperature,
+          max_tokens=max_tokens,
+          stream=True,
+        )
+
+        chunks = (chunk.choices[0].delta.content for chunk in response)
+
+        yield from (chunk for chunk in chunks if chunk)
+
+
 
 class Prompt:
     MODEL_FAMILIES = Literal["GPT", "Mistral", "Llama", "Google", "Misc"]
-    OPENAI_MODELS = Literal["gpt-3.5-turbo", "gpt-4-turbo-preview", "gpt-4"]
+    OPENAI_MODELS = Literal["gpt-3.5-turbo", "gpt-4", "gpt-4-turbo-preview"]
     OPENAI_COMPLETION_MODELS = Literal["gpt-3.5-turbo-instruct", "davinci-002", "babbage-002"]
-    MISTRAL_MODELS = Literal["mistral-small-latest", "mistral-large-latest",
-                             "mistral-medium-latest", "open-mistral-7b", "open-mixtral-8x7b", "mistral-tiny"]
+    MISTRAL_MODELS = Literal["mistral-tiny", "mistral-small", "mistral-large-latest",
+                             #"mistral-medium", 
+                             "open-mistral-7b", "open-mixtral-8x7b", "open-mixtral-8x22b"]
     LLAMA_MODELS = Literal["llama-v3-8b-instruct", "llama-v3-70b-instruct"]
     GOOGLE_MODELS = Literal["gemma-7b-it"]
 
@@ -283,9 +334,6 @@ class Prompt:
         res = cls.__provider.exec(
             cls.model, chat_history, system_prompt, temperature, max_tokens)
 
-        if verbose:
-            print(f"Response: {res}")
-
         return res
 
     @classmethod
@@ -311,14 +359,7 @@ class Prompt:
         stream = cls.__provider.exec_streaming(
             cls.model, chat_history, system_prompt, temperature, max_tokens)
 
-        if verbose:
-            print("Response: ", end="")
-            for chunk in stream:
-                print(chunk, end="")
-                yield chunk
-            print()
-        else:
-            yield from stream
+        yield from stream
 
 
     @overload
@@ -350,7 +391,7 @@ class Prompt:
                     cls.__provider = OpenAICompletionProvider()
             case 'Mistral': cls.__provider = MistralProvider()
             case 'Llama': cls.__provider = LlamaProvider()
-           # case 'Google': cls.__provider = GoogleProvider()
+            case 'Google': cls.__provider = GoogleProvider()
             case _: raise ValueError("Model family is unknown or incorrectly set")
 
         cls.model_family = model_family
@@ -381,39 +422,54 @@ class Prompt:
 
     @staticmethod
     def get_available_models():
-        # openai_models = OpenAI_client.models.list()
-        # mistral_models = Mistral_client.list_models()
-        # TODO(Kristofy): Get firework models when the bug is resolved.
-        # return {
-        #     "GPT": [model["id"] for model in openai_models.model_dump()["data"]],
-        #     "Mistral": [model["id"] for model in mistral_models.model_dump()["data"]],
-#       #      "Replicate": [model.name for model in llama_models]
-        # }
-        pass
+        openai_models = OpenAIProvider.get_client().models.list()
+        mistral_models = MistralProvider.get_client().list_models()
 
-    # @classmethod
-    # def print_models(cls):
-    #     available_models = cls.get_available_models()
-    #     for model_family, models in available_models.items():
-    #         models = list(set(models))
-    #         # color the output
-    #         print(f"{Fore.MAGENTA}[{model_family}]:")
-    #         for model in models:
-    #             print(f"\t{Fore.GREEN}{model}")
-    #         print("\n")
-    #
-    # @classmethod
-    # def print_useful_models(cls):
-    #     available_models = cls.get_available_models()
-    #     for model_family, models in available_models.items():
-    #         models = list(set(models))
-    #         # color the output
-    #         print(f"{Fore.MAGENTA}[{model_family}]:")
-    #         for model in models:
-    #             if model_family in ["GPT", "Mistral"] or model in get_args(cls.LLAMA_MODELS) or model in get_args(cls.GOOGLE_MODELS):
-    #                 print(f"\t{Fore.GREEN}{model}")
-    #         print("\n")
-    #
+        # FIXME: The upstream Fireworks repo has a pydantic error in the list request, so a network request is made to the underlying api
+
+        fireworks_models_api = f"{fireworks.client.base_url}/models"
+        fireworks_api_client = httpx.Client(
+            headers={"Authorization": f"Bearer { os.getenv('FIREWORKS_API_KEY') }"},
+        )
+        fireworks_models = (
+            model["id"] 
+            for model in fireworks_api_client.get(fireworks_models_api).json()["data"]
+            if model["id"].startswith("accounts/fireworks/models/")
+        )
+
+
+        return {
+            "GPT": [model["id"] for model in openai_models.model_dump()["data"]],
+            "Mistral": [model["id"] for model in mistral_models.model_dump()["data"]],
+            "Fireworks": [model for model in fireworks_models]
+        }
+
+    @classmethod
+    def print_models(cls):
+        available_models = cls.get_available_models()
+        for model_family, models in available_models.items():
+            models = list(set(models))
+            # color the output
+            print(f"{Fore.MAGENTA}[{model_family}]:")
+            for model in models:
+                print(f"\t{Fore.GREEN}{model}{Fore.RESET}")
+            print("\n")
+    
+    @classmethod
+    def print_useful_models(cls):
+        available_models = cls.get_available_models()
+        for model_family, models in available_models.items():
+            models = list(set(models))
+            # color the output
+            print(f"{Fore.MAGENTA}[{model_family}]:")
+            for model in models:
+                is_llama_v3 = any(model.endswith(llama) for llama in get_args(cls.LLAMA_MODELS))
+                is_google = any(model.endswith(google) for google in get_args(cls.GOOGLE_MODELS))
+
+                if model_family in ["GPT", "Mistral"] or is_llama_v3 or is_google: 
+                    print(f"\t{Fore.GREEN}{model}")
+            print("\n")
+    
 
 # Only cache if the response tuple is OK
 @cached(pred=lambda res: res[0])
@@ -454,14 +510,14 @@ def test_all():
     openai = get_args(Prompt.OPENAI_MODELS) + get_args(Prompt.OPENAI_COMPLETION_MODELS)
     mistral = get_args(Prompt.MISTRAL_MODELS)
     llama = get_args(Prompt.LLAMA_MODELS)
-#   google = get_args(Prompt.GOOGLE_MODELS)
+    google = get_args(Prompt.GOOGLE_MODELS)
 
     Prompt.set_max_tokens(80)
     models = [
             ("GPT", openai),
             ("Mistral", mistral),
             ("Llama", llama),
-          # ("Google", google),
+            ("Google", google),
     ]
 
 
@@ -472,6 +528,7 @@ def test_all():
             ok, res = test(model_family, model, stream=True)
             print(res)
 
-
+#Prompt.print_useful_models()
 if '__main__' == __name__:
-    test_all()
+        # test_all()
+        print(Prompt.get_available_models())
