@@ -19,39 +19,6 @@ from dotenv import load_dotenv
 load_dotenv()
 # -
 
-# # Command-line test
-
-# +
-# Prompt.set_system_prompt('You are a helpful, honest and honest assistant.')
-# Prompt.set_system_prompt('You are a funny assistant speaking in pirate English')
-Prompt.set_system_prompt('You are a helpful, harmless and honest assistant who has to answer questions in a funny style.')
-
-
-# You can use the LSP or the typing to check the available models
-#Prompt.set_model("GPT", "gpt-3.5-turbo")
-Prompt.set_model("Mistral", "mistral-large")
-#Prompt.set_model("Llama", "llama-2-70b-chat")
-
-Prompt.set_max_tokens(512)
-Prompt.set_verbose(True)
-Prompt.set_temperature(0.00)
-
-streaming = True
-
-prompt = 'Who was Albert Einstein?'
-
-if streaming == True:
-    stream = Prompt.exec_streaming(prompt)
-    for chunk in stream:
-        print(chunk, end="")
-    print("")
-else:
-    response = Prompt.exec(prompt)
-    print(response)
-    print("")
-print()
-# -
-
 # # Gradio program
 
 # +
@@ -60,24 +27,23 @@ import gradio as gr
 Prompt.set_verbose(False)
 
 modelfamilies_model_dict = {
-    "GPT": ["gpt-3.5-turbo", "gpt-4"],
-    "Mistral": ["mistral-tiny", "mistral-small", "mistral-large",
-                             #"mistral-medium",
-                             "open-mistral-7b", "open-mixtral-8x7b", "open-mixtral-8x22b"],
+    "GPT": ["gpt-3.5-turbo", "gpt-4o", "gpt-4-turbo"],
+    "Mistral": ["mistral-small", "mistral-large", "open-mistral-7b", "open-mixtral-8x7b", "open-mixtral-8x22b"],
     #"Llama": ["llama-2-7b-chat", "llama-2-13b-chat", "llama-2-70b-chat", "codellama-7b-instruct", "codellama-70b-instruct"],
-    "Llama": ["llama-v3-8b-instruct", "llama-v3-70b-instruct"],
+    "Llama": ["llama-v3-8b-instruct", "llama-v3-70b-instruct", "llama-v2-7b-chat", "llama-v2-70b-chat"],
 }
 
 def exec_prompt(chat_history, prompt, system_prompt, model_family = "Mistral", model="mistral-large", temperature=0.7, max_tokens=512):
     if prompt == "": prompt = "I have no question"
     if model == "mistral-large": model = "mistral-large-latest"
+    if model == "mistral-small": model = "mistral-small-latest"
     if model_family == "Mistral" and temperature > 1: temperature = 1
     if model_family == "Llama" and temperature < 0.01: temperature = 0.01
     Prompt.set_model(model_family, model)
     Prompt.set_system_prompt(system_prompt)
     Prompt.set_temperature(temperature)
     Prompt.set_max_tokens(max_tokens)    
-    
+  
     chat_history = chat_history or []
     chat_history.append([prompt, ""])
     response = Prompt.exec(chat_history)
@@ -87,6 +53,7 @@ def exec_prompt(chat_history, prompt, system_prompt, model_family = "Mistral", m
 def exec_prompt_streaming(chat_history, prompt, system_prompt, model_family = "Mistral", model="mistral-large", temperature=0.7, max_tokens=512):
     if prompt == "": prompt = "I have no question"
     if model == "mistral-large": model = "mistral-large-latest"
+    if model == "mistral-small": model = "mistral-small-latest"
     if model_family == "Mistral" and temperature > 1: temperature = 1
     if model_family == "Llama" and temperature < 0.01: temperature = 0.01
     Prompt.set_system_prompt(system_prompt)

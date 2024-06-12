@@ -5,29 +5,22 @@ from colorama import Fore
 from abc import abstractmethod
 import os
 from typing import Any, Iterable, List, Literal, Tuple, get_args, overload, Dict
-from component_utils import cached
-import re
-import httpx
 from openai import OpenAI
 from openai.types.chat import ChatCompletionMessageParam
 from mistralai.client import MistralClient
 from mistralai.models.chat_completion import ChatMessage
 from dotenv import load_dotenv, find_dotenv
-
-load_dotenv(find_dotenv(), override=True)
+from compsoft_utils import cached
+import re
+import httpx
 
 from fireworks.client import Fireworks
 import fireworks.client
 
-#from langsmith import Client
-from langsmith.run_helpers import traceable
-os.environ["LANGCHAIN_PROJECT"] = "LLM Demo"
-os.environ["LANGCHAIN_TRACING_V2"] = "true"
-#client = Client()
-
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.WARNING)
 word_splitter = re.compile(r'(\s+)')
 
+load_dotenv(find_dotenv(), override=True)
 
 Messages = List[Tuple[str, str]]
 
@@ -58,8 +51,6 @@ class OpenAICompletionProvider(LLMProvider):
 
     COMPLETION_MODELS = {"gpt-3.5-turbo-instruct",
                          "davinci-002", "babbage-002"}
-
-    @traceable(run_type="prompt", name="OpenAI_get_chat_history")
     def get_chat_history(self, chat_history: Messages, system_prompt: str) -> str:
         messages = [{"role": "system", "content": system_prompt}]
         for user_prompt, assistant_response in chat_history:
@@ -79,7 +70,6 @@ class OpenAICompletionProvider(LLMProvider):
 
         return prompt
 
-    @traceable(run_type="llm", name="OpenAI_exec")
     def exec(self, model: str, chat_history: Messages, system_prompt: str,  temperature: float, max_tokens: int) -> str:
         history = self.get_chat_history(chat_history, system_prompt)
         response = OpenAICompletionProvider.client.completions.create(
@@ -91,7 +81,7 @@ class OpenAICompletionProvider(LLMProvider):
         )
         return response.choices[0].text
 
-    @traceable(run_type="llm", name="OpenAI_exec_streaming")
+
     def exec_streaming(self, model: str, chat_history: List[Tuple[str, str]], system_prompt: str, temperature: float, max_tokens: int) -> Iterable[str]:
         history = self.get_chat_history(chat_history, system_prompt)
         stream = OpenAICompletionProvider.client.completions.create(
@@ -113,7 +103,6 @@ class OpenAIProvider(LLMProvider):
     def get_client(cls) -> OpenAI: 
         return cls.client
 
-    @traceable(run_type="prompt", name="OpenAI_get_chat_history")
     def get_chat_history(self, chat_history: Messages, system_prompt: str) -> List[ChatCompletionMessageParam]:
         messages: List[ChatCompletionMessageParam] = [{"role": "system", "content": system_prompt}]
         for user_prompt, assistant_response in chat_history:
@@ -125,7 +114,7 @@ class OpenAIProvider(LLMProvider):
 
         return messages
 
-    @traceable(run_type="llm", name="OpenAI_exec")
+
     def exec(self, model: str, chat_history: Messages, system_prompt: str,  temperature: float, max_tokens: int) -> str:
         history = self.get_chat_history(chat_history, system_prompt)
         response = OpenAIProvider.client.chat.completions.create(
@@ -138,7 +127,6 @@ class OpenAIProvider(LLMProvider):
 
         return response.choices[0].message.content or ""
 
-    @traceable(run_type="llm", name="OpenAI_exec_streaming")
     def exec_streaming(self, model: str, chat_history: List[Tuple[str, str]], system_prompt: str, temperature: float, max_tokens: int) -> Iterable[str]:
         history = self.get_chat_history(chat_history, system_prompt)
         stream = OpenAIProvider.client.chat.completions.create(
@@ -159,7 +147,6 @@ class MistralProvider(LLMProvider):
     def get_client(cls) -> MistralClient: 
         return cls.client
 
-    @traceable(run_type="prompt", name="Mistral_get_chat_history")
     def get_chat_history(self, chat_history: Messages, system_prompt: str) -> List[ChatMessage]:
         messages = [ChatMessage(role="system", content=system_prompt)]
         for user_prompt, assistant_response in chat_history:
@@ -170,7 +157,6 @@ class MistralProvider(LLMProvider):
                                 content=assistant_response))
         return messages
 
-    @traceable(run_type="llm", name="Mistral_exec")
     def exec(self, model: str, chat_history: Messages, system_prompt: str, temperature: float, max_tokens: int) -> str:
         history = self.get_chat_history(chat_history, system_prompt)
         chat_response = MistralProvider.client.chat(
@@ -183,7 +169,6 @@ class MistralProvider(LLMProvider):
 
         return chat_response.choices[0].message.content
 
-    @traceable(run_type="llm", name="Mistral_exec_streaming")
     def exec_streaming(self, model: str, chat_history: Messages, system_prompt: str, temperature: float, max_tokens: int) -> Iterable[str]:
         history = self.get_chat_history(chat_history, system_prompt)
         stream = MistralProvider.client.chat_stream(
@@ -205,7 +190,6 @@ class LlamaProvider(LLMProvider):
     def get_client(cls) -> Fireworks: 
         return cls.client
 
-    @traceable(run_type="prompt", name="Llama_get_chat_history")
     def get_chat_history(self, chat_history: Messages, system_prompt: str) -> List[Dict[str, str]]:
 
         history = []
@@ -219,8 +203,7 @@ class LlamaProvider(LLMProvider):
                 history.append({"role": "assistant", "content": assistant})
 
         return history
-
-    @traceable(run_type="llm", name="Llama_exec")
+    
     def exec(self, model: str, chat_history: Messages, system_prompt: str,  temperature: float, max_tokens: int) -> str:
 
         history = self.get_chat_history(chat_history, system_prompt)
@@ -235,11 +218,11 @@ class LlamaProvider(LLMProvider):
 
         return response.choices[0].message.content  # type: ignore
 
-    @traceable(run_type="llm", name="Llama_exec_streaming")
     def exec_streaming(self, model: str, chat_history: Messages, system_prompt: str,  temperature: float, max_tokens: int) -> Iterable[str]:
 
         history = self.get_chat_history(chat_history, system_prompt)
 
+        print(f"accounts/fireworks/models/{model}") ###
         response = LlamaProvider.client.chat.completions.create(
           model=f"accounts/fireworks/models/{model}",
           messages=history,
@@ -261,7 +244,6 @@ class GoogleProvider(LLMProvider):
     def get_client(cls) -> Fireworks: 
         return cls.client
 
-    @traceable(run_type="prompt", name="Gemma_get_chat_history")
     def get_chat_history(self, chat_history: Messages, system_prompt: str) -> List[Dict[str, str]]:
 
         history = []
@@ -276,8 +258,7 @@ class GoogleProvider(LLMProvider):
                 history.append({"role": "assistant", "content": assistant})
 
         return history
-
-    @traceable(run_type="llm", name="Gemma_exec_streaming")
+    
     def exec(self, model: str, chat_history: Messages, system_prompt: str,  temperature: float, max_tokens: int) -> str:
 
         history = self.get_chat_history(chat_history, system_prompt)
@@ -292,7 +273,6 @@ class GoogleProvider(LLMProvider):
 
         return response.choices[0].message.content  # type: ignore
 
-    @traceable(run_type="llm", name="Gemma_exec_streaming")
     def exec_streaming(self, model: str, chat_history: Messages, system_prompt: str,  temperature: float, max_tokens: int) -> Iterable[str]:
 
         history = self.get_chat_history(chat_history, system_prompt)
@@ -313,17 +293,19 @@ class GoogleProvider(LLMProvider):
 
 class Prompt:
     MODEL_FAMILIES = Literal["GPT", "Mistral", "Llama", "Google", "Misc"]
-    OPENAI_MODELS = Literal["gpt-3.5-turbo", "gpt-4", "gpt-4-turbo-preview"]
+    OPENAI_MODELS = Literal["gpt-3.5-turbo", "gpt-4o", "gpt-4-turbo"]
     OPENAI_COMPLETION_MODELS = Literal["gpt-3.5-turbo-instruct", "davinci-002", "babbage-002"]
-    MISTRAL_MODELS = Literal["mistral-tiny", "mistral-small", "mistral-large-latest",
-                             #"mistral-medium", 
-                             "open-mistral-7b", "open-mixtral-8x7b", "open-mixtral-8x22b"]
-    LLAMA_MODELS = Literal["llama-v3-8b-instruct", "llama-v3-70b-instruct"]
+    MISTRAL_MODELS = Literal[
+                            #"mistral-tiny", 
+                            #"mistral-medium", 
+                            "mistral-small-latest", "mistral-large-latest",
+                            "open-mistral-7b", "open-mixtral-8x7b", "open-mixtral-8x22b"]
+    LLAMA_MODELS = Literal["llama-v3-8b-instruct", "llama-v3-70b-instruct", "llama-v2-7b-chat", "llama-v2-70b-chat"]
     GOOGLE_MODELS = Literal["gemma-7b-it"]
 
     MODELS = OPENAI_MODELS | OPENAI_COMPLETION_MODELS | MISTRAL_MODELS | LLAMA_MODELS | GOOGLE_MODELS
 
-    model = "mistral-tiny"
+    model = "mistral-small-latest"
     model_family: MODEL_FAMILIES = "Mistral"
     __provider: LLMProvider = MistralProvider()
 
@@ -333,7 +315,6 @@ class Prompt:
     __verbose = False
 
     @classmethod
-    @traceable(run_type="chain", name="Prompt.exec")
     def exec(cls, chat_history: str | Messages, system_prompt: str | None = None, temperature: float | None = None, max_tokens: int | None = None, verbose: bool | None = None) -> str:
         chat_history = [(chat_history, '')] if isinstance(chat_history, str) else chat_history
         system_prompt = system_prompt or cls.__system_prompt
@@ -359,7 +340,6 @@ class Prompt:
         return res
 
     @classmethod
-    @traceable(run_type="chain", name="Prompt.exec_streaming")
     def exec_streaming(cls, chat_history: str | Messages, system_prompt: str | None = None, temperature: float | None = None, max_tokens: int | None = None, verbose: bool | None = None) -> Iterable[str]:
         chat_history = [(chat_history, '')] if isinstance(chat_history, str) else chat_history
         system_prompt = system_prompt or cls.__system_prompt
@@ -553,5 +533,5 @@ def test_all():
 
 #Prompt.print_useful_models()
 if '__main__' == __name__:
-        # test_all()
-        print(Prompt.get_available_models())
+        print(Prompt.print_useful_models())
+        test_all()
