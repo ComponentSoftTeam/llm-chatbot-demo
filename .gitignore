@@ -161,7 +161,7 @@ cython_debug/
 
 
 pyproject.toml
-.env
+**/.env
 *nohup.out
 .cache/
 .ipynb_checkpoints/
