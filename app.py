@@ -158,12 +158,11 @@ def get_llm(model_name: ModelName, temperature: float, max_new_tokens: int) -> B
             )
 
         case _:
-            raise RuntimeError("Invalid input model_name: {model_name}")
+            raise RuntimeError(f"Invalid input model_name: {model_name}")
 
 
-# Model names by families
-model_by_families: dict[str, list[str]] = {family.value: [] for family in ModelFamily}
-for model in ModelName:
+# Model names by familie
+model_by_families: dict[str, list[str]] = {family.value: [] for family in ModelFamily} for model in ModelName:
     family, name = model.value
     model_by_families[family.value].append(name)
 
