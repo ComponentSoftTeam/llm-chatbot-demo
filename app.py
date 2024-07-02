@@ -34,8 +34,8 @@ class ModelName(Enum):
     Each model name is associated with a model family and a model identifier.
     """
       
-    LLAMA3_70B_PROMPTING = (ModelFamily.LLAMA, 'llama-3-70b-prompting')
-    LLAMA_3_70B_FIREFUNCTION_V2 = (ModelFamily.LLAMA, 'Llama-3-70b-firefunction-v2')
+    LLAMA3_70B_INSTRUCT = (ModelFamily.LLAMA, 'llama-3-70b-instruct')
+    LLAMA3_8B_INSTRUCT = (ModelFamily.LLAMA, 'llama-3-8b-instruct')
     GPT_3_5_TURBO = (ModelFamily.GPT, 'gpt-3.5-turbo')
     GPT_4O = (ModelFamily.GPT, 'gpt-4o')
     GPT_4_TURBO = (ModelFamily.GPT, 'gpt-4-turbo')
@@ -45,7 +45,7 @@ class ModelName(Enum):
     GEMINI_1_5_FLASH = (ModelFamily.GEMINI, 'gemini-1.5-flash')
     GEMINI_1_5_PRO = (ModelFamily.GEMINI, 'gemini-1.5-pro')
     CLAUDE_3_HAIKU = (ModelFamily.CLAUDE, 'claude-3-haiku')
-    CLAUDE_3_SONNET = (ModelFamily.CLAUDE, 'claude-3-sonnet')
+    CLAUDE_3_5_SONNET = (ModelFamily.CLAUDE, 'claude-3.5-sonnet')
     CLAUDE_3_OPUS = (ModelFamily.CLAUDE, 'claude-3-opus')
 
 
@@ -66,16 +66,16 @@ def get_llm(model_name: ModelName, temperature: float, max_new_tokens: int) -> B
     """
 
     match model_name:
-        case ModelName.LLAMA3_70B_PROMPTING: 
+        case ModelName.LLAMA3_70B_INSTRUCT: 
             return ChatFireworks(
                 name="accounts/fireworks/models/llama-v3-70b-instruct",
                 max_tokens = max_new_tokens,
                 temperature = temperature,
             )
 
-        case ModelName.LLAMA_3_70B_FIREFUNCTION_V2:
+        case ModelName.LLAMA3_8B_INSTRUCT:
             return ChatFireworks(
-                name="accounts/fireworks/models/firefunction-v1",
+                name="accounts/fireworks/models/llama-v3-8b-instruct",
                 max_tokens = max_new_tokens,
                 temperature = temperature,
             )
@@ -143,7 +143,7 @@ def get_llm(model_name: ModelName, temperature: float, max_new_tokens: int) -> B
                 temperature = temperature,
             )    
 
-        case ModelName.CLAUDE_3_SONNET:
+        case ModelName.CLAUDE_3_5_SONNET:
             return ChatAnthropic(
                 model_name="claude-3-5-sonnet-20240620",
                 max_tokens = max_new_tokens,
@@ -162,7 +162,8 @@ def get_llm(model_name: ModelName, temperature: float, max_new_tokens: int) -> B
 
 
 # Model names by familie
-model_by_families: dict[str, list[str]] = {family.value: [] for family in ModelFamily} for model in ModelName:
+model_by_families: dict[str, list[str]] = {family.value: [] for family in ModelFamily} 
+for model in ModelName:
     family, name = model.value
     model_by_families[family.value].append(name)
 
