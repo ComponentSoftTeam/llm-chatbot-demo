@@ -1,5 +1,0 @@
-nohup: ignoring input
-Running on local URL:  http://127.0.0.1:7864
-Running on public URL: https://565676863625d424d9.gradio.componentsoft.ai
-
-This share link expires in 72 hours. For free permanent hosting and GPU upgrades, run `gradio deploy` from Terminal to deploy to Spaces (https://huggingface.co/spaces)
