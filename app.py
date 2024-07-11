@@ -22,11 +22,11 @@ GRADIO_PASSWORD = os.environ["GRADIO_PASSWORD"]
 class ModelFamily(Enum):
     """Represents the model families available for selection."""
     
-    LLAMA = 'Llama'
-    GPT = 'GPT'
-    MISTRAL = 'Mistral'
-    GEMINI = 'Gemini'
-    CLAUDE = 'Claude'
+    GPT = 'OpenAI GPT'
+    GEMINI = 'Google Gemini'
+    CLAUDE = 'Anthropic Claude'
+    MISTRAL = 'MistralAI Mistral'
+    LLAMA = 'Meta Llama'
 
 class ModelName(Enum):
     """
@@ -334,13 +334,13 @@ with gr.Blocks(title="CompSoft") as demo:
         model_family = gr.Dropdown(
             choices=list(model_by_families.keys()),
             label="Model family",
-            value="Mistral",
+            value="OpenAI GPT",
         )
 
         model_name = gr.Dropdown(
             choices=list(model_by_families[model_family.value]),
             label="Model",
-            value="mistral-large",
+            value="gpt-4o",
         )
 
         temperature = gr.Slider(
