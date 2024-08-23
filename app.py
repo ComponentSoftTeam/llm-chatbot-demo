@@ -485,8 +485,8 @@ with gr.Blocks(title="CompSoft") as demo:
     callback.setup([system_prompt, model_family, model_name, temperature, max_tokens, chatbot], "flagged_data_points")
 
 #demo.launch()
-demo.launch(share=True)
-#demo.launch(share=True, share_server_address="gradio.componentsoft.ai:7000", share_server_protocol="https", auth=(GRADIO_USER, GRADIO_PASSWORD), max_threads=20, show_error=True, favicon_path="favicon.ico", state_session_capacity=20)
+#demo.launch(share=True)
+demo.launch(share=True, share_server_address="gradio.componentsoft.ai:7000", share_server_protocol="https", auth=(GRADIO_USER, GRADIO_PASSWORD), max_threads=20, show_error=True, favicon_path="favicon.ico", state_session_capacity=20)
 
 # + active=""
 # gr.close_all()
