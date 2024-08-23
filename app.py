@@ -1,3 +1,18 @@
+# ---
+# jupyter:
+#   jupytext:
+#     text_representation:
+#       extension: .py
+#       format_name: light
+#       format_version: '1.5'
+#       jupytext_version: 1.16.1
+#   kernelspec:
+#     display_name: Python 3 (ipykernel)
+#     language: python
+#     name: python3
+# ---
+
+# +
 import os
 from enum import Enum
 from typing import Iterable
@@ -16,9 +31,18 @@ from langchain_openai import ChatOpenAI
 
 load_dotenv()
 
+# The user for the Gradio interface
 GRADIO_USER = os.environ["GRADIO_USER"]
 GRADIO_PASSWORD = os.environ["GRADIO_PASSWORD"]
 
+
+# -
+
+# # Setup the models
+#
+# Set up the model families, models, and their constructors
+
+# +
 class ModelFamily(Enum):
     """Represents the model families available for selection."""
     
@@ -34,8 +58,9 @@ class ModelName(Enum):
     Each model name is associated with a model family and a model identifier.
     """
       
-    LLAMA3_70B_INSTRUCT = (ModelFamily.LLAMA, 'llama-3-70b-instruct')
-    LLAMA3_8B_INSTRUCT = (ModelFamily.LLAMA, 'llama-3-8b-instruct')
+    LLAMA3_1_405B_INSTRUCT = (ModelFamily.LLAMA, 'llama-3.1-405b-instruct')
+    LLAMA3_1_70B_INSTRUCT = (ModelFamily.LLAMA, 'llama-3.1-70b-instruct')
+    LLAMA3_1_8B_INSTRUCT = (ModelFamily.LLAMA, 'llama-3.1-8b-instruct')
     GPT_3_5_TURBO = (ModelFamily.GPT, 'gpt-3.5-turbo')
     GPT_4O = (ModelFamily.GPT, 'gpt-4o')
     GPT_4_TURBO = (ModelFamily.GPT, 'gpt-4-turbo')
@@ -66,16 +91,23 @@ def get_llm(model_name: ModelName, temperature: float, max_new_tokens: int) -> B
     """
 
     match model_name:
-        case ModelName.LLAMA3_70B_INSTRUCT: 
+        case ModelName.LLAMA3_1_405B_INSTRUCT: 
             return ChatFireworks(
-                name="accounts/fireworks/models/llama-v3-70b-instruct",
+                name="accounts/fireworks/models/llama-v3p1-405b-instruct",
                 max_tokens = max_new_tokens,
                 temperature = temperature,
             )
 
-        case ModelName.LLAMA3_8B_INSTRUCT:
+        case ModelName.LLAMA3_1_70B_INSTRUCT: 
             return ChatFireworks(
-                name="accounts/fireworks/models/llama-v3-8b-instruct",
+                name="accounts/fireworks/models/llama-v3p1-70b-instruct",
+                max_tokens = max_new_tokens,
+                temperature = temperature,
+            )
+
+        case ModelName.LLAMA3_1_8B_INSTRUCT:
+            return ChatFireworks(
+                name="accounts/fireworks/models/llama-v3p1-8b-instruct",
                 max_tokens = max_new_tokens,
                 temperature = temperature,
             )
@@ -158,15 +190,28 @@ def get_llm(model_name: ModelName, temperature: float, max_new_tokens: int) -> B
             )
 
         case _:
-            raise RuntimeError(f"Invalid input model_name: {model_name}")
+            raise RuntimeError("Invalid input model_name: {model_name}")
 
 
-# Model names by familie
-model_by_families: dict[str, list[str]] = {family.value: [] for family in ModelFamily} 
+# -
+
+# ## Get the model family - model name dictionary
+#
+# This dictionary is used to set and update the dropdown menus in the Gradio UI 
+
+# +
+# Model names by families
+model_by_families: dict[str, list[str]] = {family.value: [] for family in ModelFamily}
 for model in ModelName:
     family, name = model.value
     model_by_families[family.value].append(name)
 
+print(model_by_families)
+# -
+
+# # Generic llm query
+
+# +
 # Conversation prompt template
 chat_prompt_template = ChatPromptTemplate.from_messages([
     ('system', '{system_prompt}'),
@@ -252,6 +297,11 @@ def exec_prompt(
         chat_history.append([prompt, response])
         yield (chat_history, "")
 
+# -
+
+# ## Wrappers for the gradio streaming and not streaming methods
+
+# +
 
 def exec_prompt_wrapper_streaming(
         chat_history: list[list[str]] | None, prompt: str, system_prompt: str, model_family: str, model: str, temperature: float, max_tokens: int
@@ -317,6 +367,13 @@ def exec_prompt_wrapper(
     streaming=False,
     ))
 
+
+
+# -
+
+# # Gradio UI
+
+# +
 gr.close_all()
 callback = gr.CSVLogger()
 
@@ -427,6 +484,9 @@ with gr.Blocks(title="CompSoft") as demo:
 
     callback.setup([system_prompt, model_family, model_name, temperature, max_tokens, chatbot], "flagged_data_points")
 
-# demo.launch()
-# demo.launch(share=True)
-demo.launch(share=True, share_server_address="gradio.componentsoft.ai:7000", share_server_protocol="https", auth=(GRADIO_USER, GRADIO_PASSWORD), max_threads=20, show_error=True, favicon_path="favicon.ico", state_session_capacity=20)
+#demo.launch()
+demo.launch(share=True)
+#demo.launch(share=True, share_server_address="gradio.componentsoft.ai:7000", share_server_protocol="https", auth=(GRADIO_USER, GRADIO_PASSWORD), max_threads=20, show_error=True, favicon_path="favicon.ico", state_session_capacity=20)
+
+# + active=""
+# gr.close_all()
