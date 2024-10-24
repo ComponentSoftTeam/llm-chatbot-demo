@@ -45,38 +45,70 @@ GRADIO_PASSWORD = os.environ["GRADIO_PASSWORD"]
 # +
 class ModelFamily(Enum):
     """Represents the model families available for selection."""
-    
+
     GPT = 'OpenAI GPT'
     GEMINI = 'Google Gemini'
     CLAUDE = 'Anthropic Claude'
     MISTRAL = 'MistralAI Mistral'
     LLAMA = 'Meta Llama'
 
+
 class ModelName(Enum):
     """
     Enum representing different model names.
     Each model name is associated with a model family and a model identifier.
     """
-      
-    LLAMA3_1_405B_INSTRUCT = (ModelFamily.LLAMA, 'llama-3.1-405b-instruct')
-    LLAMA3_1_70B_INSTRUCT = (ModelFamily.LLAMA, 'llama-3.1-70b-instruct')
-    LLAMA3_1_8B_INSTRUCT = (ModelFamily.LLAMA, 'llama-3.1-8b-instruct')
+
+    # Online: https://www.meta.ai/?utm_source=llama_meta_site&utm_medium=web&utm_content=Llama_hero&utm_campaign=Sept_moment
+    # ThirdParty: https://llama3.dev/
+    LLAMA_3_1_405B_INSTRUCT = (ModelFamily.LLAMA, 'llama-3.1-405b-instruct')
+    LLAMA_3_1_70B_INSTRUCT = (ModelFamily.LLAMA, 'llama-3.1-70b-instruct')
+    LLAMA_3_1_8B_INSTRUCT = (ModelFamily.LLAMA, 'llama-3.1-8b-instruct')
+    LLAMA_3_2_3B_INSTRUCT = (ModelFamily.LLAMA, 'llama-3.2-3b-instruct')
+    # TODO: should we implement LLama 3.2 11B Bision instruct?
+
+    # Online: https://platform.openai.com/playground/chat?models=o1-preview
+    # Online: https://chat.openai.com/
     GPT_3_5_TURBO = (ModelFamily.GPT, 'gpt-3.5-turbo')
-    GPT_4O = (ModelFamily.GPT, 'gpt-4o')
     GPT_4_TURBO = (ModelFamily.GPT, 'gpt-4-turbo')
+    GPT_4O = (ModelFamily.GPT, 'gpt-4o')
+    GPT_4O_CHATGPT = (ModelFamily.GPT, 'chatgpt-4o')
+    GPT_4O_MINI = (ModelFamily.GPT, 'gpt-4o-mini')
+    # XXX: Right now only for Tier 5 users
+    # GPT_O1 = (ModelFamily.GPT, 'gpt-o1')
+    # GPT_O1_MINI = (ModelFamily.GPT, 'gpt-o1-mini')
+    # TODO: Should we include audio / image options?
+    # TODO: Integrate with omni-moderation models
+
+    # Online: https://chat.mistral.ai/chat
     MISTRAL_LARGE = (ModelFamily.MISTRAL, 'mistral-large')
-    OPEN_MIXTRAL_8X22B = (ModelFamily.MISTRAL, 'open-mixtral-8x22b')
     MISTRAL_SMALL = (ModelFamily.MISTRAL, 'mistral-small')
+    MISTRAL_CODESTRAL = (ModelFamily.MISTRAL, 'codestral')
+    MISTRAL_MINISTRAL_3B = (ModelFamily.MISTRAL, 'ministral-3b')
+    MISTRAL_MINISTRAL_8B = (ModelFamily.MISTRAL, 'ministral-8b')
+    MISTRAL_NEMO = (ModelFamily.MISTRAL, 'mistral-nemo')
+    OPEN_MIXTRAL_8X22B = (ModelFamily.MISTRAL, 'open-mixtral-8x22b')
+    # TODO: Pixtral 12B could get image in
+
+    # Online: https://gemini.google.com/app
     GEMINI_1_5_FLASH = (ModelFamily.GEMINI, 'gemini-1.5-flash')
+    GEMINI_1_5_FLASH_8B = (ModelFamily.GEMINI, 'gemini-1.5-flash-8b')
     GEMINI_1_5_PRO = (ModelFamily.GEMINI, 'gemini-1.5-pro')
+    # TODO: ALl can get audio, image, and video in -> text out
+
+    # Online: https://claude.ai/chat/
     CLAUDE_3_HAIKU = (ModelFamily.CLAUDE, 'claude-3-haiku')
     CLAUDE_3_5_SONNET = (ModelFamily.CLAUDE, 'claude-3.5-sonnet')
     CLAUDE_3_OPUS = (ModelFamily.CLAUDE, 'claude-3-opus')
+    # TODO: Sonnet 3.5 could get image input
 
 
-def get_llm(model_name: ModelName, temperature: float, max_new_tokens: int) -> BaseChatModel:
-    """
-    Returns a chat model based on the specified model name, temperature, and maximum number of new tokens.
+def get_llm(
+    model_name: ModelName,
+    temperature: float,
+    max_new_tokens: int
+) -> BaseChatModel:
+    """Returns a chat model based on the specified model name, temperature and maximum number of new tokens.
 
     Args:
         model_name (ModelName): The name of the model to use.
@@ -91,102 +123,187 @@ def get_llm(model_name: ModelName, temperature: float, max_new_tokens: int) -> B
     """
 
     match model_name:
-        case ModelName.LLAMA3_1_405B_INSTRUCT: 
+        case ModelName.LLAMA_3_1_405B_INSTRUCT:
             return ChatFireworks(
                 name="accounts/fireworks/models/llama-v3p1-405b-instruct",
-                max_tokens = max_new_tokens,
-                temperature = temperature,
+                max_tokens=max_new_tokens,
+                temperature=temperature,
             )
 
-        case ModelName.LLAMA3_1_70B_INSTRUCT: 
+        case ModelName.LLAMA_3_1_70B_INSTRUCT:
             return ChatFireworks(
                 name="accounts/fireworks/models/llama-v3p1-70b-instruct",
-                max_tokens = max_new_tokens,
-                temperature = temperature,
+                max_tokens=max_new_tokens,
+                temperature=temperature,
             )
 
-        case ModelName.LLAMA3_1_8B_INSTRUCT:
+        case ModelName.LLAMA_3_1_8B_INSTRUCT:
             return ChatFireworks(
                 name="accounts/fireworks/models/llama-v3p1-8b-instruct",
-                max_tokens = max_new_tokens,
-                temperature = temperature,
+                max_tokens=max_new_tokens,
+                temperature=temperature,
+            )
+
+        case ModelName.LLAMA_3_2_3B_INSTRUCT:
+            return ChatFireworks(
+                name="accounts/fireworks/models/llama-v3p2-3b-instruct",
+                max_tokens=max_new_tokens,
+                temperature=temperature,
             )
 
         case ModelName.GPT_3_5_TURBO:
             return ChatOpenAI(
                 model="gpt-3.5-turbo",
-                max_tokens = max_new_tokens,
-                temperature = temperature,
-            )
-
-        case ModelName.GPT_4O:
-            return ChatOpenAI(
-                model="gpt-4o",
-                max_tokens = max_new_tokens,
-                temperature = temperature,
+                max_tokens=max_new_tokens,
+                temperature=temperature,
             )
 
         case ModelName.GPT_4_TURBO:
             return ChatOpenAI(
                 model="gpt-4-turbo",
-                max_tokens = max_new_tokens,
-                temperature = temperature,
-            )        
+                max_tokens=max_new_tokens,
+                temperature=temperature,
+            )
+
+        case ModelName.GPT_4O:
+            return ChatOpenAI(
+                model="gpt-4o",
+                max_tokens=max_new_tokens,
+                temperature=temperature,
+            )
+
+        case ModelName.GPT_4O_CHATGPT:
+            return ChatOpenAI(
+                model="chatgpt-4o-latest",
+                max_tokens=max_new_tokens,
+                temperature=temperature,
+            )
+
+        case ModelName.GPT_4O_MINI:
+            return ChatOpenAI(
+                model="gpt-4o-mini",
+                max_tokens=max_new_tokens,
+                temperature=temperature,
+            )
+
+        # Right now only for Tier 5 users
+        # case ModelName.GPT_O1:
+        #     return ChatOpenAI(
+        #         model="o1-preview",
+        #         max_tokens=max_new_tokens,
+        #         temperature=temperature,
+        #     )
+        #
+        # case ModelName.GPT_O1_MINI:
+        #     return ChatOpenAI(
+        #         model="o1-mini",
+        #         max_tokens=max_new_tokens,
+        #         temperature=temperature,
+        #     )
 
         case ModelName.MISTRAL_LARGE:
             return ChatMistralAI(
-                name="mistral-large-latest",
-                max_tokens = max_new_tokens,
-                temperature = temperature,
+                name="mistral-large-2407",
+                max_tokens=max_new_tokens,
+                temperature=temperature,
+            )
+
+        case ModelName.MISTRAL_LARGE:
+            return ChatMistralAI(
+                name="mistral-small-2409",
+                max_tokens=max_new_tokens,
+                temperature=temperature,
+            )
+
+        case ModelName.MISTRAL_SMALL:
+            return ChatMistralAI(
+                name="mistral-small-2409",
+                max_tokens=max_new_tokens,
+                temperature=temperature,
+            )
+
+        case ModelName.MISTRAL_CODESTRAL:
+            return ChatMistralAI(
+                name="codestral-2405",
+                max_tokens=max_new_tokens,
+                temperature=temperature,
+            )
+
+        case ModelName.MISTRAL_MINISTRAL_3B:
+            return ChatMistralAI(
+                name="ministral-3b-latest",
+                max_tokens=max_new_tokens,
+                temperature=temperature,
+            )
+
+        case ModelName.MISTRAL_MINISTRAL_8B:
+            return ChatMistralAI(
+                name="ministral-8b-latest",
+                max_tokens=max_new_tokens,
+                temperature=temperature,
+            )
+
+        case ModelName.MISTRAL_NEMO:
+            return ChatMistralAI(
+                name="mistral-nemo",
+                max_tokens=max_new_tokens,
+                temperature=temperature,
             )
 
         case ModelName.OPEN_MIXTRAL_8X22B:
             return ChatMistralAI(
                 name="open-mixtral-8x22b",
-                max_tokens = max_new_tokens,
-                temperature = temperature,
+                max_tokens=max_new_tokens,
+                temperature=temperature,
             )
 
         case ModelName.MISTRAL_SMALL:
             return ChatMistralAI(
                 name="mistral-small-latest",
-                max_tokens = max_new_tokens,
-                temperature = temperature,
-            )        
+                max_tokens=max_new_tokens,
+                temperature=temperature,
+            )
 
         case ModelName.GEMINI_1_5_FLASH:
             return ChatGoogleGenerativeAI(
                 model="gemini-1.5-flash",
-                max_output_tokens = max_new_tokens,
-                temperature = temperature,
+                max_output_tokens=max_new_tokens,
+                temperature=temperature,
+            )
+
+        case ModelName.GEMINI_1_5_FLASH_8B:
+            return ChatGoogleGenerativeAI(
+                model="gemini-1.5-flash-8b",
+                max_output_tokens=max_new_tokens,
+                temperature=temperature,
             )
 
         case ModelName.GEMINI_1_5_PRO:
             return ChatGoogleGenerativeAI(
                 model="gemini-1.5-pro",
-                max_output_tokens = max_new_tokens,
-                temperature = temperature,
+                max_output_tokens=max_new_tokens,
+                temperature=temperature,
             )
 
         case ModelName.CLAUDE_3_HAIKU:
             return ChatAnthropic(
                 model_name="claude-3-haiku-20240307",
-                max_tokens = max_new_tokens,
-                temperature = temperature,
-            )    
+                max_tokens=max_new_tokens,
+                temperature=temperature,
+            )
 
         case ModelName.CLAUDE_3_5_SONNET:
             return ChatAnthropic(
-                model_name="claude-3-5-sonnet-20240620",
-                max_tokens = max_new_tokens,
-                temperature = temperature,
+                model_name="claude-3-5-sonnet-20241022",
+                max_tokens=max_new_tokens,
+                temperature=temperature,
             )
 
         case ModelName.CLAUDE_3_OPUS:
             return ChatAnthropic(
                 model_name="claude-3-opus-20240229",
-                max_tokens = max_new_tokens,
-                temperature = temperature,
+                max_tokens=max_new_tokens,
+                temperature=temperature,
             )
 
         case _:
@@ -248,7 +365,7 @@ def exec_prompt(
         Iterable[tuple[list[list[str]], str]]: An iterable of tuples containing the updated chat history and an empty string signifying that the user prompt is moved from the input field into the history.
 
     """
-    
+
     if not prompt:
         prompt = "I have no question"
 
@@ -272,7 +389,7 @@ def exec_prompt(
         history.append(('human', human))
         history.append(('ai', ai))
 
-   
+
     chain = chat_prompt_template | llm | str_output_parser
 
     if streaming:
@@ -323,7 +440,17 @@ def exec_prompt_wrapper_streaming(
     Yields:
         Iterable[tuple[list[list[str]], str]]: An iterable of tuples, where each tuple contains the updated chat history and an empty string signifying that the user prompt is moved from the input field into the history.
     """
-    
+
+    # Convert from the openai chat format to the tuples version
+    chat_history_tuples = []
+
+
+
+    for i in range(len(chat_history) - 1):
+        chat_history_tuples.append(('human', chat_history[i][0]))
+        chat_history_tuples.append(('ai', chat_history[i][1]))
+
+
     yield from exec_prompt(
         chat_history=chat_history,
         prompt=prompt,
@@ -356,18 +483,18 @@ def exec_prompt_wrapper(
         tuple[list[list[str]], str]: A tuple containing the updated chat history and an empty string, signifying that the user prompt is moved from the input field into the history
     """
 
+
+
     return next(exec_prompt(
-    chat_history=chat_history,
-    prompt=prompt,
-    system_prompt=system_prompt,
-    model_family=model_family,
-    model=model,
-    temperature=temperature,
-    max_tokens=max_tokens,
-    streaming=False,
+        chat_history=chat_history,
+        prompt=prompt,
+        system_prompt=system_prompt,
+        model_family=model_family,
+        model=model,
+        temperature=temperature,
+        max_tokens=max_tokens,
+        streaming=False,
     ))
-
-
 
 # -
 
@@ -420,6 +547,7 @@ with gr.Blocks(title="CompSoft") as demo:
         chatbot = gr.Chatbot(
             label="ComponentSoft_GPT",
             height=400,
+            type="tuples",
             show_copy_button=True,
         )
 
@@ -484,9 +612,9 @@ with gr.Blocks(title="CompSoft") as demo:
 
     callback.setup([system_prompt, model_family, model_name, temperature, max_tokens, chatbot], "flagged_data_points")
 
-#demo.launch()
+demo.launch()
 #demo.launch(share=True)
-demo.launch(share=True, share_server_address="gradio.componentsoft.ai:7000", share_server_protocol="https", auth=(GRADIO_USER, GRADIO_PASSWORD), max_threads=20, show_error=True, favicon_path="favicon.ico", state_session_capacity=20)
+# demo.launch(share=True, share_server_address="gradio.componentsoft.ai:7000", share_server_protocol="https", auth=(GRADIO_USER, GRADIO_PASSWORD), max_threads=20, show_error=True, favicon_path="favicon.ico", state_session_capacity=20)
 
 # + active=""
 # gr.close_all()

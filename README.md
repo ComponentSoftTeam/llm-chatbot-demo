@@ -7,6 +7,7 @@ A demo application where you can explore different language models and their cap
 ## Getting Started
 
 Clone the repository and install the requirements:
+
 ```bash
 $ git clone https://github.com/ComponentSoftTeam/llm-chatbot-demo.git
 $ cd llm-chatbot-demo
@@ -14,6 +15,7 @@ $ pip install -r requirements.txt
 ```
 
 If you have conflicting dependencies, you can create a new environment and install the requirements there:
+
 ```bash
 $ python -m venv .venv
 $ source .venv/bin/activate
@@ -22,10 +24,10 @@ $ pip install -r requirements.txt
 
 Copy the `.env.example` file to `.env` and fill in the required values
 
-
 ## Running the application
 
 You can run the application by running the following command:
+
 ```bash
 python app.py
 ```
