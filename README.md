@@ -15,7 +15,7 @@ $ pip install -r requirements.txt
 
 If you have conflicting dependencies, you can create a new environment and install the requirements there:
 ```bash
-$ pythoh -m venv .venv
+$ python -m venv .venv
 $ source .venv/bin/activate
 $ pip install -r requirements.txt
 ```
@@ -32,6 +32,7 @@ python app.py
 
 Then open your browser and navigate the link provided in the terminal.
 
-> Note: The application is using python 3.10^
+> [!NOTE]
+> The application is using python 3.10^
 
 You can experiment with the jupyter notebook version of the application by loading it into a jupyter notebook environment.
