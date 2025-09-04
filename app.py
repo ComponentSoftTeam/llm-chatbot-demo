@@ -82,7 +82,6 @@ class ModelName(Enum):
     # Online: https://gemini.google.com/app
     GEMINI_2_0_FLASH_LITE = (ModelFamily.GEMINI, 'gemini-2.0-flash-lite')
     GEMINI_2_0_FLASH = (ModelFamily.GEMINI, 'gemini-2.0-flash')
-    #GEMINI_2_5_PRO = (ModelFamily.GEMINI, 'gemini-2.5-pro-preview-05-06')
     # TODO: ALl can get audio, image, and video in -> text out
 
     # Online: https://claude.ai/chat/
@@ -176,13 +175,6 @@ def get_llm(
                 max_output_tokens=max_new_tokens,
                 temperature=temperature,
             )
-        case ModelName.GEMINI_2_5_PRO:
-            return ChatGoogleGenerativeAI(
-                model="gemini-2.5-pro-preview-05-06",
-                max_output_tokens=max_new_tokens,
-                temperature=temperature,
-            )        
-
         case ModelName.CLAUDE_3_HAIKU:
             return ChatAnthropic(
                 model_name="claude-3-5-haiku-20241022",
